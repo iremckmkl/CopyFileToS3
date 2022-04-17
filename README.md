@@ -17,7 +17,7 @@ To run index.js locally:
 
 ## Usage
 When the deploy.sh is run, lambda will be deployed in vpc.
-When the index.js is run, file from given event.json in s3 will be copied.
+When the index.js is run, file given from event.json in s3 will be copied.
   
   
 
