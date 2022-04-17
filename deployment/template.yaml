@@ -50,9 +50,6 @@ Resources:
       Timeout: 5
       Policies:
         - AWSLambdaExecute
-      Environment:
-        Variables:
-          DESTINATION_BUCKETNAME: !Ref DestinationBucketName 
       Events:
         FileUpload:
           Type: S3
@@ -79,7 +76,16 @@ Resources:
             Service: lambda.amazonaws.com
           Action:
           - sts:AssumeRole
-      - PolicyName: s3
+      - PolicyName: s3Get
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+            Resource:
+              - !Sub arn:aws:s3:::${SourceBucketName}/*
+      - PolicyName: s3Put
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
