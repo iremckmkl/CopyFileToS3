@@ -1,0 +1,16 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  S3:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../
+      Handler: src/index.handler
+      Timeout: 50
+      Runtime: nodejs12.x
+      Environment: 
+        Variables:
+          region: eu-central-1
+          sourcebucket: customersourcebucket
+          targetbucket: customertargetbucket
+          

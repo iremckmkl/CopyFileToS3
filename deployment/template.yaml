@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Copy file to destination S3 bucket service
+
+Parameters:
+  Region:
+    Type: String
+    Default: eu-central-1
+    Description: Deployment region selection
+  SecurityIds:
+    Type: String
+    Default: sg-0aac249aa17d3c48a
+    Description: SecurityId
+  VpcSubnet:
+    Type: String
+    Default: subnet-0bd6f2619b6effaad
+    Description: VpcSubnet
+  BucketName:
+    Type: String
+  SourceBucketName:
+    Type: String
+  DestinationBucketName:
+    Type: String
+
+Resources:
+  ## S3 bucket
+  SourceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref SourceBucketName    
+  DestinationBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref DestinationBucketName  
+  ## Lambda function
+  CopyFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      Handler: index.handler
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityIds
+        SubnetIds:
+          - !Ref VpcSubnet
+      Role: !GetAtt LambdaExecutionRole.Arn
+      CodeUri:
+        Bucket: !Ref BucketName
+        Key: function.zip
+      Runtime: nodejs12.x
+      Timeout: 5
+      Policies:
+        - AWSLambdaExecute
+      Environment:
+        Variables:
+          DESTINATION_BUCKETNAME: !Ref DestinationBucketName 
+      Events:
+        FileUpload:
+          Type: S3
+          Properties:
+            Bucket: !Ref SourceBucket
+            Events: s3:ObjectCreated:*
+  #Permission
+  S3InvokeLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CopyFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub arn:aws:s3:::${SourceBucketName}
+  #Role
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      - PolicyName: s3
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+            Resource:
+              - !Sub arn:aws:s3:::${DestinationBucketName}/*
